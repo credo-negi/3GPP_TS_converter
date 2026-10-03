@@ -1,0 +1,10 @@
+{
+ "98e3a90d2aa7ba338a19c80d725e1f10e98ad26b": "\\frac{1}{\\sqrt{2}}\\left[\\begin{matrix}1\\\\ 1\\end{matrix}\\right]",
+ "8c16f82acbb5b03e1c3956a29a4e8373f3514895": "\\frac{1}{\\sqrt{2}}\\left[\\begin{matrix}1\\\\ -1\\end{matrix}\\right]",
+ "8e968bc26b13e99928076bf44e55aadeb0370913": "\\frac{1}{\\sqrt{2}}\\left[\\begin{matrix}1\\\\ j\\end{matrix}\\right]",
+ "479600713f093531e675d13bb8a9d0aec96c5113": "\\frac{1}{\\sqrt{2}}\\left[\\begin{matrix}1\\\\ -j\\end{matrix}\\right]",
+ "948f43809388be121896c28b2c1f80bc6db081e9": "\\begin{aligned}f_{\\mathrm{gh}}&=0\\\\ v&=0\\end{aligned}",
+ "124861e432c13fd43d9bb4ad9895e81bc2ae402a": "c_{\\mathrm{init}}=\\left\\lfloor n_{\\mathrm{ID}}^{\\mathrm{RS}}/30\\right\\rfloor",
+ "2744766e65e65382b2421f6f9e98255717aaf9df": "\\begin{aligned}a_{k,l}^{(p,\\mu)}&=\\beta_{\\mathrm{CSIRS}}w_{f}(k')\\cdot w_{t}(l')\\cdot r_{l,n_{s,f}}(m')\\\\ m'&=\\lfloor n\\alpha\\rfloor+k'+\\left\\lfloor\\frac{\\bar{k}\\rho}{N_{\\mathrm{sc}}^{\\mathrm{RB}}}\\right\\rfloor\\\\ k&=nN_{\\mathrm{sc}}^{\\mathrm{RB}}+\\bar{k}+k'\\\\ l&=\\bar{l}+l'\\\\ \\alpha&=\\begin{cases}\\rho & \\text{for }X=1\\\\ 2\\rho & \\text{for }X>1\\end{cases}\\\\ n&=0,1,\\ldots\\end{aligned}",
+ "2bcef7dac6bc715ee5a4bc2d277dd56d51060e60": "\\left(\\bar{k},\\bar{l}\\right)"
+}

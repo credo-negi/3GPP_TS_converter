@@ -1,0 +1,17 @@
+# 3GPP TS source / generated binaries (not pushed to remote)
+TS_docx/*.docx
+TS_docx/*.doc
+xlsx/*.xlsx
+# generated artifacts
+md/*
+!md/.gitkeep
+cache/
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
