@@ -448,13 +448,7 @@ class Emitter:
             if sup:
                 res += "^{" + sup + "}"
             return "{}" + res + base
-        if not base:
-            base = "{}"
-        if sub:
-            res += "_{" + sub + "}"
-        if sup:
-            res += "^{" + sup + "}"
-        return base + res
+        return lu.add_script(base or "{}", sub, sup)
 
     def fence_parts(self, t: Tmpl):
         lines = [s for s in t.slots if isinstance(s, Line)]
@@ -490,7 +484,7 @@ class Emitter:
         rows = []
         for r in range(m.rows):
             rows.append(" & ".join(cells[r * m.cols:(r + 1) * m.cols]))
-        return (r"\begin{matrix}" + r"\\ ".join(rows) + r"\end{matrix}")
+        return lu.matrix(rows, m.cols)
 
     def tmpl(self, t: Tmpl) -> str:
         sel = t.sel

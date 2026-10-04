@@ -38,6 +38,36 @@ class LatexUtilTest(unittest.TestCase):
             r"\begin{cases}"))
         self.assertIn("array", lu.cases([["a", "b", "c"]]))
 
+    def test_add_script_merges_same_kind(self):
+        self.assertEqual(lu.add_script("P", "a"), "P_{a}")
+        self.assertEqual(lu.add_script(r"P_{\mathrm{CMAX}}", ",f,c"),
+                         r"P_{\mathrm{CMAX},f,c}")
+        self.assertEqual(lu.add_script("x^{a}", "", "b"), "x^{ab}")
+
+    def test_add_script_groups_on_clash(self):
+        self.assertEqual(lu.add_script("Z'", "r", "m"),
+                         "{Z'}_{r}^{m}")
+        self.assertEqual(lu.add_script("x_{a}^{b}", "c"),
+                         "{x_{a}^{b}}_{c}")
+
+    def test_group_keeps_accent_with_scripts(self):
+        self.assertEqual(lu.group(r"\widetilde{w}_{k}^{n}"),
+                         r"{\widetilde{w}_{k}^{n}{}}")
+        self.assertEqual(lu.group(r"\tilde{r}(i)e^{x}"),
+                         r"{\tilde{r}(i)e^{x}}")
+
+    def test_split_top_ignores_nested(self):
+        s = r"\begin{matrix}a & b\\ c\end{matrix} & x\\ y"
+        rows = lu.split_top(s, r"\\ ")
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(len(lu.split_top(rows[0], " & ")), 2)
+
+    def test_matrix_columns_limit(self):
+        self.assertTrue(lu.matrix(["a & b"], 2).startswith(
+            r"\begin{matrix}"))
+        wide = lu.matrix([" & ".join("x" * 1 for _ in range(11))], 11)
+        self.assertTrue(wide.startswith(r"\begin{array}{ccccccccccc}"))
+
     def test_validate(self):
         self.assertEqual(validate_latex(r"\frac{a}{b}"), [])
         self.assertIn("unbalanced braces", validate_latex(r"\frac{a}{b"))

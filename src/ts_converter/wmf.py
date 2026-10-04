@@ -1,6 +1,7 @@
 """WMF helpers: embedded MathType data and text-record scraping."""
 from __future__ import annotations
 
+import re
 import struct
 from dataclasses import dataclass
 
@@ -205,17 +206,26 @@ def text_latex(data: bytes) -> str:
                 tex = "\\" + acc_of[id(m)] + "{" + tex + "}"
             subs = [i for i in scripts[id(m)] if i.y >= base]
             sups = [i for i in scripts[id(m)] if i.y < base]
+            sub_t = sup_t = ""
             if subs:
-                t = emit(subs)
-                if t is None:
+                sub_t = emit(subs)
+                if sub_t is None:
                     return None
-                tex = (tex or "{}") + "_{" + t + "}"
             if sups:
-                t = emit(sups)
-                if t is None:
+                sup_t = emit(sups)
+                if sup_t is None:
                     return None
-                tex = (tex or "{}") + "^{" + t + "}"
-            out.append(tex)
+            if subs or sups:
+                tex = lu.add_script(tex or "{}", sub_t, sup_t)
+            pr = re.fullmatch(r"'_\{(.*)\}", tex)
+            sc = lu._trailing_scripts(out[-1]) if out and pr else []
+            if sc and sc[0][0] == "sub":
+                # P_{a} then a primed sub: P'_{a b} (not P_{a}'_{b})
+                st = sc[0][1]
+                out[-1] = (out[-1][:st] + "'_{" + out[-1][st + 2:-1]
+                           + pr.group(1) + "}")
+            else:
+                out.append(tex)
             nxt = main[main.index(m) + 1] if main.index(m) + 1 < len(
                 main) else None
             if nxt is not None and not is_bracket(nxt) and not is_bracket(m):

@@ -43,6 +43,20 @@ class OmmlTest(unittest.TestCase):
         self.assertEqual(
             conv(x), r"\begin{matrix}1 & 0\\ 1 & 0\end{matrix}")
 
+    def test_script_on_scripted_accent_keeps_group(self):
+        acc = ("<m:acc><m:accPr><m:chr m:val='~'/></m:accPr>"
+               f"<m:e>{r('w')}</m:e></m:acc>")
+        inner = (f"<m:sSubSup><m:e>{acc}</m:e><m:sub>{r('k')}</m:sub>"
+                 f"<m:sup>{r('n')}</m:sup></m:sSubSup>")
+        x = f"<m:sSup><m:e>{inner}</m:e><m:sup>{r('H')}</m:sup></m:sSup>"
+        self.assertEqual(conv(x), r"{\tilde{w}_{k}^{n}{}}^{H}")
+
+    def test_matrix_wider_than_ten_columns(self):
+        row = "<m:mr>" + "".join(
+            f"<m:e>{r('1')}</m:e>" for _ in range(11)) + "</m:mr>"
+        self.assertIn(r"\begin{array}{ccccccccccc}",
+                      conv(f"<m:m>{row}</m:m>"))
+
     def test_align_marker_only_in_aligned(self):
         x = f"{r('a')}{r('=', '<m:rPr><m:aln/></m:rPr>')}{r('b')}"
         self.assertNotIn("&", conv(x))                       # inline

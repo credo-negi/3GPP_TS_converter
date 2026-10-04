@@ -250,9 +250,7 @@ class Converter:
         if ncols == 1:
             return (r"\begin{aligned}" + r"\\ ".join(r[0] for r in rows)
                     + r"\end{aligned}")
-        return (r"\begin{matrix}" + r"\\ ".join(" & ".join(r)
-                                                for r in rows)
-                + r"\end{matrix}")
+        return lu.matrix([" & ".join(r) for r in rows], ncols)
 
     def n_mtr(self, el) -> str:
         return " & ".join(self.node(c) for c in el)

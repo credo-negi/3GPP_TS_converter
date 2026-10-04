@@ -151,7 +151,7 @@ class Converter:
                 or re.fullmatch(r"\\[A-Za-z]+\{.*\}", s) and
                 _balanced_single(s[s.index("{"):])):
             return s
-        return "{" + s + "}"
+        return lu.group(s)
 
     def n_rad(self, el) -> str:
         e = self.kid(el, "e")
@@ -183,18 +183,20 @@ class Converter:
         if beg == "{" and end == "" and len(items) == 1 and \
                 items[0].startswith(r"\begin{matrix}"):
             body = items[0][len(r"\begin{matrix}"):-len(r"\end{matrix}")]
-            return lu.cases([r.split(" & ") for r in body.split(r"\\ ")])
+            return lu.cases([lu.split_top(r, " & ")
+                             for r in lu.split_top(body, r"\\ ")])
         return lu.fence(lb, rb, inner)
 
     def n_m(self, el) -> str:
         rows = []
+        ncols = 1
         for mr in el:
             if _local(mr) != "mr":
                 continue
-            rows.append(" & ".join(self.seq(e) for e in mr
-                                   if _local(e) == "e"))
-        return (r"\begin{matrix}" + r"\\ ".join(rows).replace(
-            lu.ALIGN, "") + r"\end{matrix}")
+            cells = [self.seq(e) for e in mr if _local(e) == "e"]
+            ncols = max(ncols, len(cells))
+            rows.append(" & ".join(cells))
+        return lu.matrix([r.replace(lu.ALIGN, "") for r in rows], ncols)
 
     def n_eqArr(self, el) -> str:
         rows = [self.seq(e) for e in el if _local(e) == "e"]

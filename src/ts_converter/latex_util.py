@@ -10,7 +10,7 @@ GREEK = {
     "ι": "iota", "κ": "kappa", "λ": "lambda", "μ": "mu", "µ": "mu",
     "ν": "nu", "ξ": "xi", "π": "pi", "ϖ": "varpi", "ρ": "rho",
     "ϱ": "varrho", "σ": "sigma", "ς": "varsigma", "τ": "tau",
-    "υ": "upsilon", "φ": "varphi", "ϕ": "phi", "χ": "chi", "ψ": "psi",
+    "υ": "upsilon", "ʋ": "upsilon", "φ": "varphi", "ϕ": "phi", "χ": "chi", "ψ": "psi",
     "ω": "omega", "Γ": "Gamma", "Δ": "Delta", "Θ": "Theta",
     "Λ": "Lambda", "Ξ": "Xi", "Π": "Pi", "Σ": "Sigma", "Υ": "Upsilon",
     "Φ": "Phi", "Ψ": "Psi", "Ω": "Omega",
@@ -230,6 +230,78 @@ def tidy(tex: str) -> str:
     return trim(tex)
 
 
+def _trailing_scripts(s: str) -> list[tuple[str, int]]:
+    """Top-level scripts at the end of s, last first: (kind, start).
+
+    kind is 'sub', 'sup' or 'prime'; start is the index of the marker.
+    """
+    out: list[tuple[str, int]] = []
+    while s:
+        if s[-1] == "'":
+            out.append(("prime", len(s) - 1))
+            s = s[:-1]
+        elif s[-1] == "}":
+            depth = 0
+            for j in range(len(s) - 1, -1, -1):
+                depth += (s[j] == "}") - (s[j] == "{")
+                if depth == 0:
+                    break
+            if j < 1 or s[j - 1] not in "_^" or depth:
+                break
+            out.append(("sub" if s[j - 1] == "_" else "sup", j - 1))
+            s = s[:j - 1]
+        else:
+            break
+    return out
+
+
+_ACCENT_START = re.compile(
+    r"\\(widetilde|widehat|tilde|hat|bar|vec|dot|ddot|overline|acute|"
+    r"grave|breve|check|mathring)\b")
+
+
+def group(s: str) -> str:
+    """{s} for use as a script base.
+
+    TeX unwraps a group made of one accent that has its own scripts, so
+    an outer script clashes with them ("Double superscript"); a trailing
+    {} keeps the group.
+    """
+    sc = _trailing_scripts(s)
+    core = s[:sc[-1][1]] if sc else s
+    single = (_ACCENT_START.match(core) and re.fullmatch(
+        r"\\[A-Za-z]+(\{.*\})", core) and _braces_balanced(core))
+    return "{" + s + ("{}" if sc and single else "") + "}"
+
+
+def _braces_balanced(s: str) -> bool:
+    """True if the first top-level group runs to the end of s."""
+    i = s.index("{")
+    depth = 0
+    for j in range(i, len(s)):
+        depth += (s[j] == "{") - (s[j] == "}")
+        if depth == 0:
+            return j == len(s) - 1
+    return False
+
+
+def add_script(base: str, sub: str = "", sup: str = "") -> str:
+    """base with sub/superscripts, avoiding double scripts.
+
+    A script of the same kind that follows an existing one is merged
+    into it (P_{a} then _{b} gives P_{ab}); other clashes group base.
+    """
+    scripts = _trailing_scripts(base)
+    kinds = {k if k != "prime" else "sup" for k, _ in scripts}
+    if (sub and "sub" in kinds) or (sup and "sup" in kinds):
+        if bool(sub) != bool(sup) and scripts and \
+                scripts[0][0] == ("sub" if sub else "sup"):
+            return base[:-1] + (sub or sup) + "}"
+        base = group(base)
+    return (base + ("_{" + sub + "}" if sub else "")
+            + ("^{" + sup + "}" if sup else ""))
+
+
 def text_to_latex(s: str, style: str | None = None) -> str:
     """Convert the text of a math run (OMML) to LaTeX.
 
@@ -279,6 +351,36 @@ def right_delim(d: str) -> str:
 
 def fence(left: str, right: str, inner: str) -> str:
     return rf"\left{left} {inner} \right{right_delim(right)}"
+
+
+def split_top(s: str, sep: str) -> list[str]:
+    """Split s at sep, ignoring any sep nested in {} or \\begin..\\end."""
+    parts: list[str] = []
+    depth = start = i = 0
+    while i < len(s):
+        if s.startswith(sep, i) and depth == 0:
+            parts.append(s[start:i])
+            i += len(sep)
+            start = i
+            continue
+        if s[i] == "\\":
+            m = re.match(r"\\(begin|end)\{", s[i:])
+            if m:
+                depth += 1 if m.group(1) == "begin" else -1
+            i += 2 if s[i + 1:i + 2] in "{}" else 1
+            continue
+        depth += (s[i] == "{") - (s[i] == "}")
+        i += 1
+    parts.append(s[start:])
+    return parts
+
+
+def matrix(rows: list[str], ncols: int) -> str:
+    """matrix (limited to 10 columns by amsmath) or a centred array."""
+    body = r"\\ ".join(rows)
+    if ncols <= 10:
+        return r"\begin{matrix}" + body + r"\end{matrix}"
+    return r"\begin{array}{" + "c" * ncols + "}" + body + r"\end{array}"
 
 
 def cases(rows: list[list[str]]) -> str:
