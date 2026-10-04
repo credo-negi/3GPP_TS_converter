@@ -182,10 +182,11 @@ class MdWriter:
         self.files: list[tuple[Section, str]] = []
 
     # ------------------------------------------------------ text
-    def sents(self, segs: list[Seg], cell: bool = False) -> list[str]:
+    def sents(self, segs: list[Seg], cell: bool = False,
+              fmt: str = "md") -> list[str]:
         segs = [Seg("image", self.images.alt(g.src, g.text), g.src)
                 if g.kind == "image" else g for g in segs]
-        out = segs_to_sentences(segs, "md", self.images.path)
+        out = segs_to_sentences(segs, fmt, self.images.path)
         if cell:
             out = [o.replace("|", r"\|") if "$" not in o
                    else self.cell_math(o) for o in out]
@@ -242,6 +243,9 @@ class MdWriter:
     def table_lines(self, t: Table) -> list[str]:
         if not t.rows:
             return []
+        if any(c.covered or c.colspan > 1 or c.rowspan > 1
+               for r in t.rows for c in r):
+            return self.html_table_lines(t)
         ncols = max(len(r) for r in t.rows)
         grid: list[list[str]] = []
         for ri, row in enumerate(t.rows):
@@ -261,6 +265,35 @@ class MdWriter:
         lines = ["| " + " | ".join(grid[0]) + " |",
                  "|" + "|".join(["---"] * ncols) + "|"]
         lines += ["| " + " | ".join(r) + " |" for r in grid[1:]]
+        return lines
+
+    def html_table_lines(self, t: Table) -> list[str]:
+        """HTML table for merged cells (no blank lines: one md block)."""
+        lines = ["<table>"]
+        for ri, row in enumerate(t.rows):
+            lines.append("<tr>")
+            tag = "th" if ri == 0 else "td"
+            for c in row:
+                if c.covered:
+                    continue
+                attr = ""
+                if c.colspan > 1:
+                    attr += f' colspan="{c.colspan}"'
+                if c.rowspan > 1:
+                    attr += f' rowspan="{c.rowspan}"'
+                sents: list[str] = []
+                for segs in c.paras:
+                    sents.extend(self.sents(segs, fmt="html"))
+                if not sents:
+                    lines.append(f"<{tag}{attr}></{tag}>")
+                    continue
+                lines.append(f"<{tag}{attr}>" + sents[0]
+                             + ("<br>" if len(sents) > 1 else f"</{tag}>"))
+                for i, x in enumerate(sents[1:], 1):
+                    last = i == len(sents) - 1
+                    lines.append(x + (f"</{tag}>" if last else "<br>"))
+            lines.append("</tr>")
+        lines.append("</table>")
         return lines
 
     def cell_text(self, c) -> str:

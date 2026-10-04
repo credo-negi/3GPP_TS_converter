@@ -32,7 +32,10 @@ def make_doc() -> Document:
                [Cell([[t("1")]], rowspan=2), Cell([[t("x | y")]]),
                 Cell([[t("z")]])],
                [Cell(covered=True, origin=(1, 0)), Cell([[t("q")]]),
-                Cell([[t("r")]])]]),
+                Cell([[Seg("math", r"x_{1}<2")]])]]),
+        Table([[Cell([[t("H1")]]), Cell([[t("H2")]])],
+               [Cell([[t("a | b")]]), Cell([[t("c")]])],
+               [Cell([[Seg("math", "y")]]), Cell([[t("c")]])]]),
     ])
     doc.sections += [s1, s2]
     return doc
@@ -74,11 +77,37 @@ class MdWriterTest(unittest.TestCase):
         self.assertIn("> NOTE 1: be careful.\n> Really.", txt)
         self.assertIn("$$a=b$$", txt)
 
-    def test_table_merged_cells_repeat(self):
+    def test_table_merged_cells_html(self):
         txt = self.read("002_5.1_Mapper.md")
-        self.assertIn("| A | B | B |", txt)
-        self.assertIn("| 1 | x \\| y | z |", txt)
-        self.assertIn("| 1 | q | r |", txt)
+        self.assertIn("<table>", txt)
+        self.assertIn('<th>A</th>', txt)
+        self.assertIn('<th colspan="2">B</th>', txt)
+        self.assertIn('<td rowspan="2">1</td>', txt)
+        self.assertIn("<td>x | y</td>", txt)
+        self.assertEqual(txt.count("<td>q</td>"), 1)
+        self.assertEqual(txt.count("<tr>"), 3)
+
+    def test_math_in_merged_table_is_mathml(self):
+        txt = self.read("002_5.1_Mapper.md")
+        self.assertIn("<td><math><msub><mi>x</mi><mn>1</mn></msub>"
+                      "<mo>&lt;</mo><mn>2</mn></math></td>", txt)
+        table = txt[txt.index("<table>"):txt.index("</table>")]
+        self.assertNotIn("$", table)
+        self.assertNotIn("\n\n", table)      # one markdown block
+
+    def test_unconvertible_math_in_html_table_stays_latex(self):
+        from ts_converter.render import seg_atom
+        a = seg_atom(Seg("math", r"\nosuchcommand<1"), "html", str)
+        self.assertEqual(a, r"$\nosuchcommand&lt;1$")
+
+    def test_math_in_plain_table_stays_latex(self):
+        txt = self.read("002_5.1_Mapper.md")
+        self.assertIn("| $y$ | c |", txt)
+
+    def test_table_without_merge_is_gfm(self):
+        txt = self.read("002_5.1_Mapper.md")
+        self.assertIn("| H1 | H2 |", txt)
+        self.assertIn("| a \\| b | c |", txt)
 
     def test_breadcrumb_and_index(self):
         self.assertTrue(self.read("002_5.1_Mapper.md").startswith(

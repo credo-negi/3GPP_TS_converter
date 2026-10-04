@@ -2,10 +2,27 @@
 from __future__ import annotations
 
 from .ir import Seg
+from .latex_mathml import latex_to_mathml
 from .sentences import split_with_atoms
 
 
+def esc_html(t: str) -> str:
+    return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def seg_atom(s: Seg, fmt: str, img_path) -> str:
+    if fmt == "html":     # md text inside an HTML table
+        if s.kind == "math":
+            try:
+                return latex_to_mathml(s.text)
+            except ValueError:    # keep the LaTeX ('&' of aligned stays)
+                return "$" + s.text.replace("<", "&lt;") + "$"
+        if s.kind in ("sup", "sub"):
+            return f"<{s.kind}>{esc_html(s.text)}</{s.kind}>"
+        if s.kind == "image":
+            return (f'<img src="{img_path(s.src)}" '
+                    f'alt="{esc_html(s.text).replace(chr(34), "&quot;")}">')
+        return esc_html(s.text)
     if s.kind == "math":
         return f"${s.text}$"
     if s.kind == "sup":

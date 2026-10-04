@@ -28,6 +28,8 @@ docx -> docx_parser -> IR -> md_writer
 - `omml.py` OMML を LaTeX へ
 - `mtef.py` MathType MTEF v3/v5 の解析
 - `mathml.py` MathML を LaTeX へ (LO 用)
+- `latex_mathml.py` LaTeX を MathML へ
+  (結合セルがある表の中の数式用)
 - `ole_math.py` LibreOffice で OLE を変換
 - `wmf.py` WMF の解析 (MTEF/文字配置)
 - `symbolfont.py` Symbol フォントの対応表
