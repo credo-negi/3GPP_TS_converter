@@ -52,6 +52,8 @@ PYTHONPATH=src python3 -m ts_converter \
 - `contact_sheet.py` WMF 画像の一覧を作る
 - `show_wmf.py` 画像を1枚 PNG にする
 - `check_docs.py` ドキュメントの行数・文字数
+- `download_specs.py` 参照 TS/TR の一括取得
+  (`docs/REFERENCED_SPECS.md`)
 
 ## キャッシュ
 - LibreOffice 変換は docx の sha1 で保存

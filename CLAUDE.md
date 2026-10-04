@@ -40,6 +40,8 @@ Python プロジェクト。LLM への入力文脈を小さく
 - 数式の構文検査: `python3 tools/check_latex.py
   md/38211/Rel-19_V19.5.0`
 - 文書の検査: `python3 tools/check_docs.py`
+- 参照 TS/TR の取得: `python3
+  tools/download_specs.py`
 
 ## ドキュメント規約 (必須)
 - 各 .md は 200 行以内、1行 50 文字以内
@@ -71,3 +73,4 @@ Python プロジェクト。LLM への入力文脈を小さく
 - `docs/OUTPUT_FORMAT.md` 出力仕様
 - `docs/EQUATIONS.md` 数式の復元
 - `docs/TESTING.md` テストと検証
+- `docs/REFERENCED_SPECS.md` 参照 TS/TR
