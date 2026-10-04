@@ -168,8 +168,11 @@ class EquationResolver:
         return preview or Seg("text", "")
 
     # -------------------------------------------------------- picture
-    def picture(self, rid: str, alt: str = "") -> Seg:
-        """A drawing/picture; MathType pictures are turned into LaTeX."""
+    def picture(self, rid: str, alt: str = "", figure: bool = False) -> Seg:
+        """A drawing/picture; MathType pictures are turned into LaTeX.
+
+        figure: the picture is known to be a figure (kept as an image).
+        """
         src = self.media(rid)
         data = self.zf.read(src)
         key = sha1(data)
@@ -177,7 +180,7 @@ class EquationResolver:
         if key in self.overrides:
             self._note("picture", "override", key, self.overrides[key])
             return Seg("math", self.overrides[key])
-        if src.lower().endswith(".wmf"):
+        if src.lower().endswith(".wmf") and not figure:
             m = wmf.embedded_mtef(data)
             if m:
                 try:

@@ -30,6 +30,16 @@ def w(tag: str) -> str:
     return f"{{{W}}}{tag}"
 
 
+def is_figure_paragraph(el) -> bool:
+    """A picture alone in a TH paragraph is a figure, not an equation.
+
+    Only the visible text (w:t) counts, not field codes."""
+    for p in el.iterancestors(w("p")):
+        text = "".join(t.text or "" for t in p.iter(w("t")))
+        return style_of(p) == "TH" and not text.strip()
+    return False
+
+
 def style_of(p) -> str:
     st = p.find(f"{w('pPr')}/{w('pStyle')}")
     return st.get(w("val")) if st is not None else ""
@@ -80,7 +90,8 @@ class DocxParser:
             return [self.res.ole(obj)]
         img = obj.find(f".//{{{V}}}imagedata")
         if img is not None and img.get(f"{{{R}}}id"):
-            return [self.res.picture(img.get(f"{{{R}}}id"), "figure")]
+            return [self.res.picture(img.get(f"{{{R}}}id"), "figure",
+                                     is_figure_paragraph(obj))]
         return []
 
     def drawing_segs(self, dr) -> list[Seg]:
@@ -90,14 +101,16 @@ class DocxParser:
             if rid:
                 dp = dr.find(f".//{{{WP}}}docPr")
                 alt = dp.get("descr", "") if dp is not None else ""
-                out.append(self.res.picture(rid, alt))
+                out.append(self.res.picture(rid, alt,
+                                            is_figure_paragraph(dr)))
         return out
 
     def pict_segs(self, pict) -> list[Seg]:
         out = []
         for img in pict.iter(f"{{{V}}}imagedata"):
             if img.get(f"{{{R}}}id"):
-                out.append(self.res.picture(img.get(f"{{{R}}}id")))
+                out.append(self.res.picture(img.get(f"{{{R}}}id"), "",
+                                            is_figure_paragraph(pict)))
         return out
 
     # ---------------------------------------------------- paragraphs
