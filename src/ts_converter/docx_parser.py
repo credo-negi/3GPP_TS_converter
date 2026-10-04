@@ -366,7 +366,8 @@ class DocxParser:
                 if style_of(p) == "ZA":
                     meta_text = "".join(p.itertext()).strip()
                     break
-        mm = re.search(r"TS\s+(\d+\.\d+)\s+V(\d+\.\d+\.\d+)", meta_text)
+        mm = re.search(r"T[SR]\s+(\d+\.\d+(?:-\d+)?)\s+V(\d+\.\d+\.\d+)",
+                       meta_text)
         if mm:
             doc.version = mm.group(2)
             doc.title = meta_text
@@ -393,8 +394,12 @@ def split_heading(text: str, level: int) -> tuple[str, str, int]:
 
 
 def parse_filename(path: Path) -> tuple[str, int]:
-    """'38211-fa0.docx' -> ('38211', 15); version letter = base-36 major."""
-    m = re.match(r"(\d{5})-([0-9a-z])", path.stem)
+    """'38211-fa0.docx' -> ('38211', 15); version letter = base-36 major.
+
+    A spec in several parts keeps the part: '38101-2-fu0' -> ('38101-2', 15).
+    """
+    m = re.match(r"(\d{5})(?:-(\d+))?-([0-9a-z])[0-9a-z]{2}$", path.stem)
     if not m:
         return path.stem, 0
-    return m.group(1), int(m.group(2), 36)
+    spec = m.group(1) + (f"-{m.group(2)}" if m.group(2) else "")
+    return spec, int(m.group(3), 36)
