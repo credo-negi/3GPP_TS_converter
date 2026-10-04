@@ -12,6 +12,9 @@ python3 -m unittest discover -s tests -t .
 - `test_latex_util.py` 文字変換・検証関数
 - `test_omml.py` OMML の主要構造
 - `test_mtef.py` 合成した MTEF v3/v5 を解析
+- `test_latex_mathml.py` LaTeX→MathML の構造と
+  LaTeX との字形列の一致
+- `mathml_check.py` 比較用の字形列 (変換器と独立)
 - `test_writers.py` md / xlsx の出力
 - `test_version.py` 表紙からのバージョン取得
 - `test_overrides.py` 手動上書きの構文検査
@@ -20,6 +23,11 @@ python3 -m unittest discover -s tests -t .
 ## 結合テストの確認項目
 - 数式の未解決・警告が 0 件
 - 全ての数式が構文的に正しい
+- 結合セルがある表の数式が MathML に変換でき、
+  LaTeX と字形列 (記号の並び) が一致する
+- 同じ MathML の英数字列が docx の数式と一致
+  (OMML は m:t、OLE は LibreOffice の MathML。
+  cache/ にある分だけ。画像の数式は対象外)
 - 見出し数が目次と一致 (H6 を加味)
 - 最上位の節 1〜7 と Annex A が存在
   (節 8 は Rel-16 以降のみ)

@@ -1,4 +1,6 @@
 """Whole-document checks on the real 38.211 files (skipped if absent)."""
+import collections
+import json
 import re
 import unittest
 from pathlib import Path
@@ -6,9 +8,13 @@ from pathlib import Path
 from lxml import etree
 
 from tests import support
+from tests.mathml_check import (NS, alnum, latex_glyphs, mathml_alnum,
+                                mathml_glyphs, omml_text)
 from ts_converter.docx_parser import DocxParser, style_of
 from ts_converter.equations import validate_latex
 from ts_converter.ir import DisplayMath, Para, Table
+from ts_converter.latex_mathml import latex_to_mathml
+from ts_converter.ole_math import sha1_of
 
 FILES = ["38211-fa0.docx", "38211-ga0.docx", "38211-hb0.docx",
          "38211-ia0.docx", "38211-j50.docx"]
@@ -39,6 +45,44 @@ def all_math(doc):
                                         if s.kind == "math")
 
 
+def merged_table_math(doc):
+    """LaTeX of the math in tables that are written as HTML tables."""
+    for sec in doc.sections:
+        for b in sec.blocks:
+            if isinstance(b, Table) and any(
+                    c.covered or c.colspan > 1 or c.rowspan > 1
+                    for r in b.rows for c in r):
+                for row in b.rows:
+                    for c in row:
+                        for segs in c.paras:
+                            yield from (s.text for s in segs
+                                        if s.kind == "math")
+
+
+def docx_glyphs(p) -> dict[str, list[str]]:
+    """LaTeX -> letters/digits of the docx equation it came from.
+
+    OMML: the m:t texts.  MathType (OLE): the MathML that LibreOffice made
+    from the object (read from cache/, never regenerated here).
+    """
+    cache = support.ROOT / "cache" / f"ole_mathml_{sha1_of(p.path)[:16]}.json"
+    lo = {int(k): v for k, v in json.loads(cache.read_text()).items()} \
+        if cache.exists() else {}
+    out = collections.defaultdict(list)
+    for kind, src, tex in p.res.trace:
+        if kind == "omml":
+            out[tex].append(omml_text(src))
+        elif src in lo:
+            root = etree.fromstring(lo[src].encode())
+            text = alnum("".join(
+                e.text or "" for e in root.iter()
+                if isinstance(e.tag, str) and e.tag.split("}")[-1] in
+                ("mi", "mn", "mo", "mtext")))
+            if text:
+                out[tex].append(text)
+    return out
+
+
 class IntegrationBase:
     name = ""
 
@@ -50,6 +94,33 @@ class IntegrationBase:
         _, doc = parsed(self.name)
         bad = [m for m in all_math(doc) if validate_latex(m)]
         self.assertEqual(bad[:3], [])
+
+    def test_table_math_becomes_mathml(self):
+        _, doc = parsed(self.name)
+        bad = []
+        for tex in set(merged_table_math(doc)):
+            try:
+                m = latex_to_mathml(tex)
+                etree.fromstring(m.replace("<math>", f'<math xmlns="{NS}">'))
+                if mathml_glyphs(m) != latex_glyphs(tex):
+                    bad.append(tex)
+            except ValueError:
+                bad.append(tex)
+        self.assertEqual(bad[:3], [])
+
+    def test_table_mathml_matches_docx(self):
+        p, doc = parsed(self.name)
+        srcs = docx_glyphs(p)
+        checked, bad = 0, []
+        for tex in set(merged_table_math(doc)):
+            if tex in srcs:
+                checked += 1
+                if mathml_alnum(latex_to_mathml(tex)) not in srcs[tex]:
+                    bad.append((tex, srcs[tex][:1]))
+        self.assertEqual(bad[:3], [])
+        print(f"\n{self.name}: {checked} of "
+              f"{len(set(merged_table_math(doc)))} table equations "
+              "checked against the docx", end=" ")
 
     def test_headings_match_toc(self):
         p, doc = parsed(self.name)

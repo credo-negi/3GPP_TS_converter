@@ -74,6 +74,9 @@ class EquationResolver:
         self._lo: dict[int, str] | None = None
         self.stats: Counter = Counter()
         self.report: list[dict] = []
+        # (kind, source, latex) per resolved equation, for verification:
+        # omml -> the m:oMath element, ole -> index in the document
+        self.trace: list[tuple[str, object, str]] = []
 
     # -------------------------------------------------------- helpers
     def media(self, rid: str) -> str:
@@ -115,6 +118,7 @@ class EquationResolver:
         if not tex:
             self._note("omml", "empty", "")
             return Seg("text", "")
+        self.trace.append(("omml", el, tex))
         probs = validate_latex(tex)
         self._note("omml", "warn" if probs or warns else "omml",
                    "", tex, probs + warns)
@@ -122,6 +126,12 @@ class EquationResolver:
 
     # ------------------------------------------------------------ OLE
     def ole(self, obj) -> Seg:
+        seg = self._ole(obj)
+        if seg.kind == "math":
+            self.trace.append(("ole", self.ole_index.get(id(obj)), seg.text))
+        return seg
+
+    def _ole(self, obj) -> Seg:
         """Resolve a w:object (OLE) holding an equation."""
         ole = obj.find(f"{{{O}}}OLEObject")
         progid = ole.get("ProgID", "")
