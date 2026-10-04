@@ -15,7 +15,7 @@ Python プロジェクト。LLM への入力文脈を小さく
 
 ## Git の運用ルール
 - リモートは GitHub の `origin` (main)
-- `TS_docx/*.docx`, `xlsx/*.xlsx`, `md/` 配下の
+- `TS_docx/` 配下全て, `xlsx/*.xlsx`, `md/` 配下の
   生成物は `.gitignore` 済み。push しない
 - push は依頼があったときだけ行う
 - コミットは依頼があったときだけ行う

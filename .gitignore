@@ -1,6 +1,6 @@
 # 3GPP TS source / generated binaries (not pushed to remote)
-TS_docx/*.docx
-TS_docx/*.doc
+TS_docx/*
+!TS_docx/.gitkeep
 xlsx/*.xlsx
 # generated artifacts
 md/*
