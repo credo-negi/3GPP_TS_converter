@@ -2,14 +2,14 @@
 
 ## Markdown
 - 1見出し = 1ファイル (最下層の節まで)
-- ファイル名: <連番3桁>_<節番号>_<題名>.md
-  例: 038_5.2.1_Pseudo_random_sequence_
-  generation.md
+- ファイル名: `<連番3桁>_<節番号>_<題名>.md`
+  例: `038_5.2.1_Pseudo_random_sequence_
+  generation.md`
 - 連番は文書順。辞書順で読み順になる
 - 先頭行は出典コメント
-  <!-- TS 38.211 Rel-19 V19.5.0 | 5 > 5.2 -->
+  `<!-- TS 38.211 Rel-19 V19.5.0 | 5 > 5.2 -->`
 - 次に見出し行 (# の数 = 階層)
-- index.md に全節へのリンクを階層表示
+- `index.md` に全節へのリンクを階層表示
 - 親節のファイルには親自身の本文だけを入れる
 
 ## 1文1行
@@ -26,23 +26,23 @@
 - NOTE / EXAMPLE: 行頭に > を付ける
 - 記号定義 (EW/EX): - 記号: 説明
 - 表題・図題: **太字** 1行
-- 図: ![alt](images/imageN.png)
+- 図: `![alt](images/imageN.png)`
   alt は tesseract の高信頼な語 (無ければ figure)
   wmf/emf は PDF 経由で 220dpi の PNG にする
-- 上付き・下付き文字: <sup> <sub>
+- 上付き・下付き文字: `<sup>` `<sub>`
 
 ## 数式
-- 行内: $...$
-- 独立行: $$...$$ (1行に収める)
-- 複数行の式は aligned 環境
-- 場合分けは cases (3列以上は array)
-- 表のセル内の | は \vert に置換
+- 行内: `$...$`
+- 独立行: `$$...$$` (1行に収める)
+- 複数行の式は `aligned` 環境
+- 場合分けは `cases` (3列以上は `array`)
+- 表のセル内の `|` は `\vert` に置換
 
 ## 表 (md)
 - GFM テーブル。1行 = 表の1行
 - 先頭行を見出し行として扱う
 - 結合セルは同じ内容を繰り返して展開
-- セル内の複数文は <br> で連結
+- セル内の複数文は `<br>` で連結
 
 ## xlsx
 - Index シート: 版情報とシート一覧
@@ -51,9 +51,9 @@
 - 種別: H1.. / text / bulletN / note / def
   caption / eq / table / image
 - text/bullet/note: 1文=1行=1セル
-- eq: C列に $LaTeX$
+- eq: C列に $\LaTeX$
 - 表: C列から格子状に配置、結合は実際に結合
 - セル内の複数文は改行で連結
 
-## _meta/
-- equation_issues.json 未解決・警告の数式
+## `_meta/`
+- `equation_issues.json` 未解決・警告の数式
