@@ -361,6 +361,11 @@ class DocxParser:
         for b in doc.sections[0].blocks:
             if isinstance(b, Para) and b.style == "ZA":
                 meta_text = self.plain(b.segs)
+        if not meta_text:      # newer releases put the cover in a table
+            for p in self.body.iter(w("p")):
+                if style_of(p) == "ZA":
+                    meta_text = "".join(p.itertext()).strip()
+                    break
         mm = re.search(r"TS\s+(\d+\.\d+)\s+V(\d+\.\d+\.\d+)", meta_text)
         if mm:
             doc.version = mm.group(2)

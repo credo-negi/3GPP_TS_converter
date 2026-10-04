@@ -13,6 +13,7 @@ python3 -m unittest discover -s tests -t .
 - `test_omml.py` OMML の主要構造
 - `test_mtef.py` 合成した MTEF v3/v5 を解析
 - `test_writers.py` md / xlsx の出力
+- `test_version.py` 表紙からのバージョン取得
 - `test_overrides.py` 手動上書きの構文検査
 - `test_integration.py` 実 docx の不変条件
 
