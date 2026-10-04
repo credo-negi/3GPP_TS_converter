@@ -17,6 +17,10 @@ python3 -m unittest discover -s tests -t .
 - `mathml_check.py` 比較用の字形列 (変換器と独立)
 - `test_writers.py` md / xlsx の出力
 - `test_version.py` 表紙からのバージョン取得
+  と枝番付きの仕様番号 (38101-2 等)
+- `test_figure.py` TH 段落の図を数式にしない
+- `test_merge_docx.py` 分割 docx の結合
+- `test_download_specs.py` 一括取得 (通信なし)
 - `test_overrides.py` 手動上書きの構文検査
 - `test_integration.py` 実 docx の不変条件
 
