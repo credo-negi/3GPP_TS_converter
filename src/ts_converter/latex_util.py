@@ -25,6 +25,7 @@ SYMBOLS = {
     "×": r"\times", "·": r"\cdot", "⋅": r"\cdot", "∙": r"\cdot",
     "•": r"\bullet", "∗": "*", "∘": r"\circ", "°": r"^{\circ}",
     "±": r"\pm", "∓": r"\mp", "÷": r"\div", "⊗": r"\otimes",
+    "⨂": r"\otimes", "≔": ":=",
     "⊕": r"\oplus", "⊙": r"\odot", "∑": r"\sum", "∏": r"\prod",
     "∫": r"\int", "∬": r"\iint", "∮": r"\oint", "√": r"\surd",
     "∞": r"\infty", "∂": r"\partial", "∇": r"\nabla", "ℓ": r"\ell",
@@ -65,8 +66,9 @@ COMBINING = {
     "̂": "hat", "̃": "tilde", "̄": "bar", "̅": "bar",
     "̇": "dot", "̈": "ddot", "̌": "check", "́": "acute",
     "̀": "grave", "̆": "breve", "⃗": "vec", "⃖": "vec",
-    "̱": "underline",
+    "̱": "underline", "\u033f": "bar",
 }
+DOUBLE_MARKS = {"\u033f"}      # drawn twice: \bar{\bar{x}}
 ACCENT_CHARS = {
     "̂": "hat", "ˆ": "hat", "^": "hat", "̃": "tilde", "˜": "tilde",
     "~": "tilde", "̄": "bar", "¯": "bar", "‾": "bar", "̅": "bar",
@@ -95,6 +97,14 @@ _TEXT_ESC = {"_": r"\_", "%": r"\%", "&": r"\&", "#": r"\#", "$": r"\$",
              "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
 
 
+_SCRIPT_DIGITS = {c: f"\\ensuremath{{{{}}_{{{i}}}}}"
+                  for i, c in enumerate("₀₁₂₃₄₅₆₇₈₉")}
+_SCRIPT_DIGITS.update({c: f"\\ensuremath{{{{}}^{{{i}}}}}"
+                       for i, c in enumerate("⁰¹²³⁴⁵⁶⁷⁸⁹")})
+_TEXT_ESC.update(_SCRIPT_DIGITS)
+_TEXT_ESC["\ufffd"] = "?"      # a character lost in the source docx
+
+
 def escape_text(s: str) -> str:
     """Escape a string for ``\\text{}``."""
     out = []
@@ -119,6 +129,10 @@ def char_to_latex(ch: str) -> str:
     when a command could swallow the next letter)."""
     if ch in SPACES:
         return SPACES[ch]
+    if ch == "\\":       # a typed backslash must not start a command
+        return r"\backslash "
+    if ch == "\ufffd":    # a character lost in the source docx
+        return "?"
     if ch in GREEK:
         return "\\" + GREEK[ch] + " "
     if ch in GREEK_LATIN:
@@ -148,6 +162,10 @@ def char_to_latex(ch: str) -> str:
     nf = unicodedata.normalize("NFKC", ch)
     if nf != ch and all(c.isascii() for c in nf):
         return nf
+    decomp = unicodedata.normalize("NFD", ch)      # E-circumflex -> \hat{E}
+    if (len(decomp) > 1 and decomp[0].isascii()
+            and all(c in COMBINING for c in decomp[1:])):
+        return accent_wrap(decomp[0], decomp[1:])
     return ch  # leave as is; reported by the validator
 
 
@@ -191,6 +209,7 @@ def word_to_latex(s: str) -> str:
 
 def upright_text(s: str) -> str:
     """Upright text with punctuation kept in math mode."""
+    s = s.replace("\u2126", "\u03a9")      # ohm sign -> Greek capital omega
     if not s.strip():
         return r"\ " if s else ""
     out = []
@@ -302,15 +321,32 @@ def add_script(base: str, sub: str = "", sup: str = "") -> str:
             + ("^{" + sup + "}" if sup else ""))
 
 
+def accent_wrap(tex: str, marks: str) -> str:
+    """Put the combining marks (known ones only) over tex."""
+    for ch in marks:
+        cmd = COMBINING.get(ch)
+        if cmd:
+            for _ in range(2 if ch in DOUBLE_MARKS else 1):
+                tex = f"\\{cmd}{{{trim(tex)}}}"
+    return tex
+
+
+# "A" + NBSP + a combining mark: the mark belongs to the text before it
+DETACHED_MARK = re.compile("(.*?)[\u00a0 ]+([\u0300-\u036f]+)", re.S)
+
+
 def text_to_latex(s: str, style: str | None = None) -> str:
     """Convert the text of a math run (OMML) to LaTeX.
 
     style: None (default italic), 'p' (upright), 'b', 'bi', 'nor'
     (normal text) or a script font name.
     """
-    s = s.replace("\u2061", "")
+    s = s.replace("\u2061", "").replace("\u2126", "\u03a9")
     if style == "nor":
         return upright_text(s)
+    m = DETACHED_MARK.fullmatch(s)
+    if m and m.group(1):
+        return accent_wrap(text_to_latex(m.group(1), style), m.group(2))
     # attach combining marks to their base character
     pieces: list[str] = []
     chars = list(s)
@@ -318,14 +354,9 @@ def text_to_latex(s: str, style: str | None = None) -> str:
     while i < len(chars):
         ch = chars[i]
         j = i + 1
-        marks = []
         while j < len(chars) and chars[j] in COMBINING:
-            marks.append(COMBINING[chars[j]])
             j += 1
-        base = char_to_latex(ch)
-        for m in marks:
-            base = f"\\{m}{{{base.strip()}}}"
-        pieces.append(base)
+        pieces.append(accent_wrap(char_to_latex(ch), "".join(chars[i + 1:j])))
         i = j
     out = "".join(pieces)
     if style == "p":

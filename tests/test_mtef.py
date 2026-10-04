@@ -52,6 +52,17 @@ class Mtef5Test(unittest.TestCase):
                          r"\sum\limits_{i}^{N} x")
 
 
+class EmitterTest(unittest.TestCase):
+    def test_space_in_a_variable_run_keeps_its_blank(self):
+        em = mtef.Emitter()
+        space = mtef.Char(0x20, face=3)
+        self.assertEqual(em.char_text(space), r"\ ")
+        out = em.run([space, mtef.Char(0x32, face=8), space,
+                      mtef.Char(0x3d, face=6)])
+        self.assertNotIn("\\2", out)       # no bare backslash before "2"
+        self.assertNotIn("\\=", out)
+
+
 class Mtef3Test(unittest.TestCase):
     def test_variable(self):
         data = bytes.fromhex("0301010 30a0a0112836b00000000".replace(

@@ -352,9 +352,11 @@ class Emitter:
             return ""
         if code == 0:
             return ""
-        return lu.char_to_latex(chr(code)).rstrip() + (
-            " " if lu.char_to_latex(chr(code)).startswith("\\")
-            and lu.char_to_latex(chr(code)).rstrip()[-1].isalpha() else "")
+        t = lu.char_to_latex(chr(code))
+        if t.endswith("\\ "):         # a TeX space: keep its blank
+            return t
+        return t.rstrip() + (
+            " " if t.startswith("\\") and t.rstrip()[-1].isalpha() else "")
 
     def run(self, chars: list[Char]) -> str:
         """Emit a run of consecutive plain characters."""

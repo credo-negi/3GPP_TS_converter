@@ -29,6 +29,40 @@ class LatexUtilTest(unittest.TestCase):
         self.assertEqual(lu.text_to_latex("x̃"), r"\tilde{x}")
         self.assertEqual(lu.text_to_latex("ab", "b"), r"\mathbf{ab}")
 
+    def test_accent_on_text_before_a_detached_mark(self):
+        # "A" + NBSP + combining dot above (time derivative)
+        self.assertEqual(lu.text_to_latex("A\u00a0\u0307"), r"\dot{A}")
+        self.assertEqual(lu.text_to_latex("\u2206n\u00a0\u0307").strip(),
+                         r"\dot{\Delta n}")
+
+    def test_double_overline(self):
+        self.assertEqual(lu.text_to_latex("b\u033f"), r"\bar{\bar{b}}")
+
+    def test_ohm_sign_is_omega(self):
+        self.assertEqual(lu.text_to_latex("\u2126").strip(), r"\Omega")
+        self.assertEqual(lu.upright_text("\u2126").strip(), r"\Omega")
+
+    def test_precomposed_accented_letter(self):
+        self.assertEqual(lu.char_to_latex("\u00ca"), r"\hat{E}")
+        self.assertEqual(validate_latex(lu.char_to_latex("\u00ca")), [])
+
+    def test_assignment_and_circled_times(self):
+        self.assertEqual(lu.text_to_latex("n\u2254n+1"), "n:=n+1")
+        self.assertIn(r"\otimes", lu.text_to_latex("a\u2a02b"))
+
+    def test_unicode_script_digits_in_text(self):
+        t = lu.escape_text("r\u2081(k)")
+        self.assertNotIn("\u2081", t)
+        self.assertEqual(validate_latex(r"\text{" + t + "}"), [])
+
+    def test_typed_backslash_is_not_a_command(self):
+        self.assertNotIn("\\N", lu.text_to_latex(r"a\bmod \N").replace(
+            r"\backslash N", ""))
+        self.assertIn(r"\backslash", lu.text_to_latex("a\\b"))
+
+    def test_lost_character_is_kept_as_a_question_mark(self):
+        self.assertEqual(lu.escape_text("R\ufffdC"), "R?C")
+
     def test_fence_adds_space_after_command(self):
         self.assertTrue(lu.fence(r"\lfloor", r"\rfloor", "x").endswith(
             r"\rfloor "))

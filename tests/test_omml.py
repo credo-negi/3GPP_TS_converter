@@ -23,6 +23,15 @@ NOR = "<m:rPr><m:nor/></m:rPr>"
 
 
 class OmmlTest(unittest.TestCase):
+    def test_lone_mark_goes_over_the_previous_item(self):
+        x = r("i") + r("\u00a0\u0307")
+        self.assertEqual(conv(x), r"\dot{i}")
+
+    def test_double_overline_accent(self):
+        x = ("<m:acc><m:accPr><m:chr m:val=\"\u033f\"/></m:accPr>"
+             f"<m:e>{r('b')}</m:e></m:acc>")
+        self.assertEqual(conv(x), r"\bar{\bar{b}}")
+
     def test_fraction(self):
         x = f"<m:f><m:num>{r('1')}</m:num><m:den>{r('2')}</m:den></m:f>"
         self.assertEqual(conv(x), r"\frac{1}{2}")

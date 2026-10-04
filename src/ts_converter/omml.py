@@ -55,6 +55,11 @@ class Converter:
         for k in el:
             if _local(k).endswith("Pr"):
                 continue
+            if _local(k) == "r" and out:
+                m = lu.DETACHED_MARK.fullmatch(self.run_text(k))
+                if m and not m.group(1):     # a lone mark: over the last item
+                    out[-1] = lu.accent_wrap(out[-1], m.group(2))
+                    continue
             out.append(self.node(k))
         return "".join(out)
 
@@ -74,9 +79,12 @@ class Converter:
         return fn(el)
 
     # run
+    @staticmethod
+    def run_text(el) -> str:
+        return "".join(t.text or "" for t in el if _local(t) == "t")
+
     def n_r(self, el) -> str:
-        text = "".join(t.text or "" for t in el
-                       if _local(t) == "t")
+        text = self.run_text(el)
         if not text:
             return ""
         rpr = el.find(q("rPr"))
@@ -268,7 +276,10 @@ class Converter:
             cmd = "overline"
         if not single and cmd == "vec":
             cmd = "overrightarrow"
-        return rf"\{cmd}{self.g(e)}"
+        res = rf"\{cmd}{self.g(e)}"
+        if chr_ in lu.DOUBLE_MARKS:
+            res = rf"\{cmd}{self.g(res)}"
+        return res
 
     def n_bar(self, el) -> str:
         pos = self.prop(el, "barPr", "pos", "top")
