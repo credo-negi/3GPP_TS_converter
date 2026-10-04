@@ -17,6 +17,7 @@ docx -> docx_parser -> IR -> md_writer
 ## モジュール (`src/ts_converter/`)
 - `cli.py` コマンドライン入口
 - `docx_parser.py` docx から IR を作る
+- `merge_docx.py` 分割 docx のパーツを1本に結合
 - `ir.py` 中間表現 (Seg, Para, Table, ...)
 - `sentences.py` 文分割 (数式は不可分)
 - `render.py` 文の描画 (md/xlsx 共通)

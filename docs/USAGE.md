@@ -15,6 +15,9 @@ PYTHONPATH=src python3 -m ts_converter \
   TS_docx/38211-fa0.docx
 ```
 複数ファイルを続けて指定できる。
+分割 docx (36.211, 38.101-1, 38.133 等) は
+`TS_docx/<名前>/` のディレクトリを指定する。
+パーツを `cache/merged/` で1本に結合して変換。
 
 ## オプション
 - `--md-dir` md の出力ルート (既定 `md/`)
@@ -26,6 +29,7 @@ PYTHONPATH=src python3 -m ts_converter \
 
 ## 出力先
 - `md/<仕様>/Rel-<N>_V<版>/*.md`
+  (仕様は枝番付き。例 `38101-2`)
 - `md/<仕様>/Rel-<N>_V<版>/images/`
 - `md/<仕様>/Rel-<N>_V<版>/_meta/`
 - `xlsx/<仕様>_Rel-<N>_V<版>.xlsx`

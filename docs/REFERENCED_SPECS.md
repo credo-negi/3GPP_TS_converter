@@ -46,6 +46,13 @@ python3 tools/download_specs.py --specs 38.321
 python3 tools/download_specs.py --tiers core
 ```
 
+## 変換
+- docx は `python3 -m ts_converter <docx>`
+- `.doc` は LibreOffice で docx にしてから
+- 分割 docx はディレクトリごと指定する
+- 未解決の数式 (WMF 画像のまま) が
+  36.212, 36.213, 38.133 に多い
+
 ## 注意
 - 既定の User-Agent は 403 になるため偽装する
 - 存在しない Release は 403 が返る

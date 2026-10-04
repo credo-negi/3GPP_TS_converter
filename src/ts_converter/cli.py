@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .docx_parser import DocxParser
 from .md_writer import ImageStore, MdWriter
+from .merge_docx import merge_dir
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -56,7 +57,8 @@ def convert(path: Path, md_root: Path, xlsx_root: Path | None,
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="ts_converter",
                                  description="3GPP TS docx -> md / xlsx")
-    ap.add_argument("docx", nargs="+", type=Path)
+    ap.add_argument("docx", nargs="+", type=Path,
+                    help="docx, or a directory of split docx parts")
     ap.add_argument("--md-dir", type=Path, default=ROOT / "md")
     ap.add_argument("--xlsx-dir", type=Path, default=ROOT / "xlsx")
     ap.add_argument("--cache-dir", type=Path, default=ROOT / "cache")
@@ -66,6 +68,8 @@ def main(argv=None) -> int:
     ap.add_argument("--no-xlsx", action="store_true")
     a = ap.parse_args(argv)
     for p in a.docx:
+        if p.is_dir():     # TS split into parts: merge them first
+            p = merge_dir(p, a.cache_dir / "merged")
         convert(p, a.md_dir, a.xlsx_dir, a.cache_dir, a.overrides,
                 not a.no_md, not a.no_xlsx)
     return 0
